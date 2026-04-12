@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudinary Upload Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+    input, button { margin: 10px 0; padding: 10px; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    .preview { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    .preview img { width: 150px; height: 150px; object-fit: cover; border: 2px solid #ddd; }
+    .error { color: red; }
+    .success { color: green; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🖼️ Cloudinary Upload Test</h1>
+  
+  <div>
+    <h3>Step 1: Admin Login</h3>
+    <input type="email" id="email" placeholder="Email" value="admin@landapp.com">
+    <input type="password" id="password" placeholder="Password" value="admin123">
+    <button onclick="login()">Login</button>
+    <div id="loginStatus"></div>
+  </div>
+
+  <div>
+    <h3>Step 2: Upload Images</h3>
+    <input type="file" id="fileInput" multiple accept="image/*" disabled>
+    <button onclick="uploadImages()" id="uploadBtn" disabled>Upload to Cloudinary</button>
+    <div id="uploadStatus"></div>
+  </div>
+
+  <div>
+    <h3>Uploaded Photos</h3>
+    <div id="preview" class="preview"></div>
+    <pre id="photosJson"></pre>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000';
+    let adminToken = '';
+    let uploadedPhotos = [];
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const status = document.getElementById('loginStatus');
+
+      try {
+        const response = await fetch(`${API_URL}/api/admin/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          adminToken = data.data.token;
+          status.innerHTML = '<span class="success">✅ Login successful!</span>';
+          document.getElementById('fileInput').disabled = false;
+          document.getElementById('uploadBtn').disabled = false;
+        } else {
+          status.innerHTML = `<span class="error">❌ ${data.message}</span>`;
+        }
+      } catch (error) {
+        status.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+      }
+    }
+
+    async function getUploadSignature() {
+      const response = await fetch(`${API_URL}/api/admin/upload-signature`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await response.json();
+      return data.data;
+    }
+
+    async function uploadToCloudinary(file, signature) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('timestamp', signature.timestamp);
+      formData.append('signature', signature.signature);
+      formData.append('api_key', signature.api_key);
+      formData.append('folder', signature.folder);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${signature.cloud_name}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      return response.json();
+    }
+
+    async function uploadImages() {
+      const fileInput = document.getElementById('fileInput');
+      const files = Array.from(fileInput.files);
+      const status = document.getElementById('uploadStatus');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      if (files.length === 0) {
+        status.innerHTML = '<span class="error">Please select files</span>';
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      status.innerHTML = '⏳ Uploading...';
+
+      try {
+        const signature = await getUploadSignature();
+
+        const results = await Promise.all(
+          files.map(async (file, index) => {
+            const result = await uploadToCloudinary(file, signature);
+            return {
+              url: result.secure_url,
+              publicId: result.public_id,
+              order: uploadedPhotos.length + index
+            };
+          })
+        );
+
+        uploadedPhotos = [...uploadedPhotos, ...results];
+        
+        status.innerHTML = `<span class="success">✅ Uploaded ${results.length} image(s)</span>`;
+        displayPhotos();
+        fileInput.value = '';
+      } catch (error) {
+        status.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    }
+
+    function displayPhotos() {
+      const preview = document.getElementById('preview');
+      const json = document.getElementById('photosJson');
+
+      preview.innerHTML = uploadedPhotos
+        .map(photo => `<img src="${photo.url}" alt="Photo ${photo.order}">`)
+        .join('');
+
+      json.textContent = JSON.stringify(uploadedPhotos, null, 2);
+    }
+  </script>
+</body>
+</html>

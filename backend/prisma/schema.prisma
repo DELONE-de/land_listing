@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  USER
+}
+
+enum LandType {
+  RESIDENTIAL
+  COMMERCIAL
+  AGRICULTURAL
+  INDUSTRIAL
+  MIXED_USE
+}
+
+enum ListingStatus {
+  AVAILABLE
+  SOLD
+  UNDER_OFFER
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(USER)
+  listings  Listing[]
+  favorites Favorite[]
+  createdAt DateTime   @default(now())
+}
+
+model Listing {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  description     String
+  price           Decimal       @db.Decimal(15, 2)
+  size            Float
+  landType        LandType
+  status          ListingStatus @default(AVAILABLE)
+  address         String
+  state           String
+  city            String
+  lat             Float?
+  lng             Float?
+  amenities       String[]
+  titleDocuments  String[]
+  photos          Json[]
+  views           Int           @default(0)
+  whatsappClicks  Int           @default(0)
+  shareClicks     Int           @default(0)
+  favoriteClicks  Int           @default(0)
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  inquiries       Inquiry[]
+  favorites       Favorite[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([state, city])
+  @@index([status])
+  @@index([price])
+  @@index([landType])
+  @@index([lat, lng])
+}
+
+enum InquirySource {
+  FORM
+  WHATSAPP
+}
+
+enum InquiryStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+model Inquiry {
+  id        String        @id @default(cuid())
+  listingId String
+  listing   Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  message   String
+  source    InquirySource @default(FORM)
+  status    InquiryStatus @default(NEW)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([listingId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum Status {
+  available
+  sold
+  under_offer
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  user      User     @relation(fields: [userId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
