@@ -1,19 +1,65 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 
-export const useFavorites = () => {
+const FAVORITES_KEY = 'landapp_favorites';
+
+export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setFavorites(JSON.parse(localStorage.getItem('favorites') || '[]'));
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored));
+      } catch (error) {
+        console.error('Failed to parse favorites:', error);
+      }
+    }
+    setIsLoaded(true);
   }, []);
 
-  const toggle = (id: string) =>
-    setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
-      localStorage.setItem('favorites', JSON.stringify(next));
-      return next;
-    });
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    }
+  }, [favorites, isLoaded]);
 
-  return { favorites, toggle, isFavorite: (id: string) => favorites.includes(id) };
-};
+  const addFavorite = (id: string) => {
+    setFavorites((prev) => {
+      if (prev.includes(id)) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const removeFavorite = (id: string) => {
+    setFavorites((prev) => prev.filter((fav) => fav !== id));
+  };
+
+  const toggleFavorite = (id: string) => {
+    if (isFavorite(id)) {
+      removeFavorite(id);
+    } else {
+      addFavorite(id);
+    }
+  };
+
+  const isFavorite = (id: string) => {
+    return favorites.includes(id);
+  };
+
+  const clearFavorites = () => {
+    setFavorites([]);
+  };
+
+  return {
+    favorites,
+    addFavorite,
+    removeFavorite,
+    toggleFavorite,
+    isFavorite,
+    clearFavorites,
+    isLoaded,
+  };
+}

@@ -1,21 +1,44 @@
 'use client';
-import { MessageCircle } from 'lucide-react';
-import { generateWhatsAppUrl } from '@/lib/utils';
-import api from '@/lib/api-client';
 
-export default function WhatsAppButton({ listingId, listingTitle }: { listingId: string; listingTitle: string }) {
-  const phone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '';
+import { useState } from 'react';
+import { MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api-client';
+
+interface WhatsAppButtonProps {
+  listingId: string;
+  phoneNumber: string;
+  message?: string;
+}
+
+export function WhatsAppButton({ listingId, phoneNumber, message }: WhatsAppButtonProps) {
+  const [isTracking, setIsTracking] = useState(false);
 
   const handleClick = async () => {
-    await api.post(`/listings/${listingId}/track-click`, { event: 'whatsapp' }).catch(() => {});
-    window.open(generateWhatsAppUrl(phone, listingTitle), '_blank');
+    if (isTracking) return;
+
+    setIsTracking(true);
+    try {
+      await apiClient.trackClick(listingId, 'whatsapp');
+    } catch (error) {
+      console.error('Failed to track WhatsApp click:', error);
+    } finally {
+      setIsTracking(false);
+    }
+
+    const defaultMessage = message || 'Hi, I am interested in this property listing.';
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
+    window.open(url, '_blank');
   };
 
   return (
-    <button onClick={handleClick}
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg transition-colors font-medium">
-      <MessageCircle size={20} />
-      WhatsApp
-    </button>
+    <Button
+      onClick={handleClick}
+      className="fixed bottom-6 right-6 z-40 h-14 gap-2 rounded-full px-6 shadow-lg"
+      size="lg"
+    >
+      <MessageCircle className="h-5 w-5" />
+      Contact via WhatsApp
+    </Button>
   );
 }

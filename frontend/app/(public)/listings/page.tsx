@@ -1,107 +1,200 @@
 'use client';
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
-import SearchBar from '@/components/SearchBar';
-import ListingCard from '@/components/ListingCard';
-import { useListings, ListingFilters } from '@/hooks/useListings';
-import { STATES, LGA_BY_STATE } from '@/data/nigeria-locations';
-import { Map, Grid } from 'lucide-react';
 
-const ListingMap = dynamic(() => import('@/components/ListingMap'), { ssr: false });
-
-const DOC_TYPES = ['C_OF_O','DEED_OF_ASSIGNMENT','SURVEY_PLAN','GOVERNORS_CONSENT','OTHER'];
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ListingGrid } from '@/components/ListingGrid';
+import { SearchBar } from '@/components/SearchBar';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SlidersHorizontal, X } from 'lucide-react';
+import { useListings } from '@/hooks/useListings';
+import { FilterParams } from '@/lib/types';
 
 export default function ListingsPage() {
-  const [filters, setFilters] = useState<ListingFilters>({});
-  const [page, setPage] = useState(1);
-  const [view, setView] = useState<'grid' | 'map'>('grid');
-  const { data, isLoading } = useListings({ ...filters, page });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterParams>({
+    search: searchParams.get('search') || '',
+    location: searchParams.get('location') || '',
+    landType: searchParams.get('landType') || '',
+    minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
+    maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
+    sort: searchParams.get('sort') || '-createdAt',
+    page: 1,
+    limit: 12,
+  });
 
-  const listings = data?.data ?? [];
-  const pages = data?.pages ?? 1;
+  const { listings, loading, error, total, updateParams } = useListings(filters);
+
+  const handleSearch = (query: string) => {
+    setFilters({ ...filters, search: query, page: 1 });
+  };
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters({ ...filters, [key]: value, page: 1 });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      search: '',
+      location: '',
+      landType: '',
+      minPrice: undefined,
+      maxPrice: undefined,
+      sort: '-createdAt',
+      page: 1,
+      limit: 12,
+    });
+  };
+
+  useEffect(() => {
+    updateParams(filters);
+  }, [filters]);
+
+  const activeFiltersCount = Object.values(filters).filter(
+    (value) => value !== '' && value !== undefined && value !== '-createdAt'
+  ).length;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <SearchBar onSearch={f => { setFilters(f); setPage(1); }} className="mb-6" />
-
-      <div className="flex gap-6">
-        {/* Sidebar filters */}
-        <aside className="hidden lg:block w-56 flex-shrink-0 space-y-5">
-          <div>
-            <label className="text-sm font-medium text-textPrimary block mb-1">State</label>
-            <select className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-              onChange={e => setFilters(f => ({ ...f, state: e.target.value, lga: '' }))}>
-              <option value="">All</option>
-              {STATES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          {filters.state && LGA_BY_STATE[filters.state] && (
-            <div>
-              <label className="text-sm font-medium text-textPrimary block mb-1">LGA</label>
-              <select className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                onChange={e => setFilters(f => ({ ...f, lga: e.target.value }))}>
-                <option value="">All</option>
-                {LGA_BY_STATE[filters.state].map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="text-sm font-medium text-textPrimary block mb-1">Min Price (₦)</label>
-            <input type="number" placeholder="0" className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-              onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-textPrimary block mb-1">Max Price (₦)</label>
-            <input type="number" placeholder="Any" className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-              onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-textPrimary block mb-1">Document Type</label>
-            <select className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-              onChange={e => setFilters(f => ({ ...f, documentType: e.target.value }))}>
-              <option value="">All</option>
-              {DOC_TYPES.map(d => <option key={d} value={d}>{d.replace(/_/g, ' ')}</option>)}
-            </select>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-textSecondary text-sm">{data?.total ?? 0} listings found</p>
-            <div className="flex gap-2">
-              <button onClick={() => setView('grid')} className={`p-2 rounded-lg border ${view === 'grid' ? 'border-primary text-primary' : 'border-border text-textSecondary'}`}><Grid size={16} /></button>
-              <button onClick={() => setView('map')} className={`p-2 rounded-lg border ${view === 'map' ? 'border-primary text-primary' : 'border-border text-textSecondary'}`}><Map size={16} /></button>
-            </div>
-          </div>
-
-          {view === 'map' ? (
-            <div className="h-[600px]"><ListingMap listings={listings} /></div>
-          ) : (
-            <>
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />)}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {listings.map((l: any) => <ListingCard key={l.id} listing={l} />)}
-                </div>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Browse Listings</h1>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <SearchBar onSearch={handleSearch} />
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-white">
+                  {activeFiltersCount}
+                </span>
               )}
-              {pages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
-                  {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-                    <button key={p} onClick={() => setPage(p)}
-                      className={`w-9 h-9 rounded-lg text-sm font-medium border ${p === page ? 'bg-primary text-white border-primary' : 'border-border text-textSecondary hover:border-primary'}`}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+            </Button>
+            {activeFiltersCount > 0 && (
+              <Button variant="ghost" onClick={handleClearFilters} className="gap-2">
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="mb-8 rounded-lg border bg-card p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label>Location</Label>
+              <Input
+                placeholder="Enter location"
+                value={filters.location || ''}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Land Type</Label>
+              <Select
+                value={filters.landType || ''}
+                onValueChange={(value) => handleFilterChange('landType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="residential">Residential</SelectItem>
+                  <SelectItem value="commercial">Commercial</SelectItem>
+                  <SelectItem value="agricultural">Agricultural</SelectItem>
+                  <SelectItem value="industrial">Industrial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Min Price (₦)</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={filters.minPrice || ''}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value ? Number(e.target.value) : undefined)}
+              />
+            </div>
+            <div>
+              <Label>Max Price (₦)</Label>
+              <Input
+                type="number"
+                placeholder="No limit"
+                value={filters.maxPrice || ''}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sort and Results Count */}
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          {loading ? 'Loading...' : `${total} properties found`}
+        </p>
+        <Select
+          value={filters.sort || '-createdAt'}
+          onValueChange={(value) => handleFilterChange('sort', value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="-createdAt">Newest First</SelectItem>
+            <SelectItem value="createdAt">Oldest First</SelectItem>
+            <SelectItem value="price">Price: Low to High</SelectItem>
+            <SelectItem value="-price">Price: High to Low</SelectItem>
+            <SelectItem value="-views">Most Viewed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Listings Grid */}
+      {error ? (
+        <div className="text-center py-12">
+          <p className="text-destructive">{error}</p>
+        </div>
+      ) : loading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Loading listings...</p>
+        </div>
+      ) : (
+        <ListingGrid listings={listings} />
+      )}
+
+      {/* Pagination */}
+      {total > (filters.limit || 12) && (
+        <div className="mt-8 flex justify-center gap-2">
+          <Button
+            variant="outline"
+            disabled={filters.page === 1}
+            onClick={() => handleFilterChange('page', (filters.page || 1) - 1)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            disabled={(filters.page || 1) * (filters.limit || 12) >= total}
+            onClick={() => handleFilterChange('page', (filters.page || 1) + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

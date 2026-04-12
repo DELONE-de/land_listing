@@ -1,36 +1,153 @@
 'use client';
+
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-export default function ImageGallery({ images }: { images: string[] }) {
-  const [active, setActive] = useState(0);
+interface ImageGalleryProps {
+  images: string[];
+  title: string;
+}
 
-  const prev = () => setActive(i => (i - 1 + images.length) % images.length);
-  const next = () => setActive(i => (i + 1) % images.length);
+export function ImageGallery({ images, title }: ImageGalleryProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
 
-  if (!images.length) return <div className="h-80 bg-gray-100 rounded-xl flex items-center justify-center text-textSecondary">No images</div>;
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const goToImage = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  if (images.length === 0) {
+    return (
+      <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
+        <p className="text-gray-500">No images available</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-2">
-      <div className="relative h-80 w-full rounded-xl overflow-hidden">
-        <Image src={images[active]} alt="listing" fill className="object-cover" />
+    <>
+      <div className="space-y-4">
+        {/* Main Image */}
+        <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100">
+          <Image
+            src={images[currentIndex]}
+            alt={`${title} - Image ${currentIndex + 1}`}
+            fill
+            className="object-cover cursor-pointer"
+            onClick={() => setShowLightbox(true)}
+            priority
+          />
+          
+          {images.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                onClick={goToPrevious}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                onClick={goToNext}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          )}
+
+          <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+            {currentIndex + 1} / {images.length}
+          </div>
+        </div>
+
+        {/* Thumbnails */}
         {images.length > 1 && (
-          <>
-            <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-1 rounded-full hover:bg-black/60"><ChevronLeft size={20} /></button>
-            <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-1 rounded-full hover:bg-black/60"><ChevronRight size={20} /></button>
-          </>
+          <div className="grid grid-cols-5 gap-2">
+            {images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => goToImage(index)}
+                className={cn(
+                  "relative aspect-video overflow-hidden rounded-lg border-2 transition-all",
+                  currentIndex === index
+                    ? "border-primary ring-2 ring-primary"
+                    : "border-transparent hover:border-gray-300"
+                )}
+              >
+                <Image
+                  src={image}
+                  alt={`Thumbnail ${index + 1}`}
+                  fill
+                  className="object-cover"
+                />
+              </button>
+            ))}
+          </div>
         )}
       </div>
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {images.map((img, i) => (
-            <button key={i} onClick={() => setActive(i)} className={`relative h-16 w-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${i === active ? 'border-primary' : 'border-transparent'}`}>
-              <Image src={img} alt="" fill className="object-cover" />
-            </button>
-          ))}
+
+      {/* Lightbox */}
+      {showLightbox && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/10"
+            onClick={() => setShowLightbox(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+
+          <div className="relative w-full h-full max-w-7xl max-h-[90vh] mx-4">
+            <Image
+              src={images[currentIndex]}
+              alt={`${title} - Image ${currentIndex + 1}`}
+              fill
+              className="object-contain"
+            />
+          </div>
+
+          {images.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10"
+                onClick={goToPrevious}
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10"
+                onClick={goToNext}
+              >
+                <ChevronRight className="h-8 w-8" />
+              </Button>
+            </>
+          )}
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-lg">
+            {currentIndex + 1} / {images.length}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

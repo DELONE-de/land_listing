@@ -1,12 +1,32 @@
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  AVAILABLE:   { label: 'Available',   cls: 'bg-green-100 text-available' },
-  SOLD:        { label: 'Sold',        cls: 'bg-red-100 text-sold' },
-  UNDER_OFFER: { label: 'Under Offer', cls: 'bg-yellow-100 text-underOffer' },
-};
+interface StatusBadgeProps {
+  status: 'available' | 'sold' | 'under_offer';
+  className?: string;
+}
 
-export default function StatusBadge({ status }: { status: string }) {
-  const { label, cls } = STATUS_MAP[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600' };
-  return <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', cls)}>{label}</span>;
+export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const variants = {
+    available: {
+      label: 'Available',
+      className: 'bg-green-100 text-green-800 border-green-200',
+    },
+    sold: {
+      label: 'Sold',
+      className: 'bg-red-100 text-red-800 border-red-200',
+    },
+    under_offer: {
+      label: 'Under Offer',
+      className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    },
+  };
+
+  const variant = variants[status] || variants.available;
+
+  return (
+    <Badge className={cn(variant.className, className)} variant="outline">
+      {variant.label}
+    </Badge>
+  );
 }

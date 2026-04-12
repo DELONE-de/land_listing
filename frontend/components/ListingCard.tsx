@@ -1,48 +1,87 @@
 'use client';
-import { motion } from 'framer-motion';
-import { Heart, MapPin } from 'lucide-react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { MapPin, Maximize, Heart } from 'lucide-react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { StatusBadge } from './StatusBadge';
 import { formatPrice } from '@/lib/utils';
+import { Listing } from '@/lib/types';
 import { useFavorites } from '@/hooks/useFavorites';
-import StatusBadge from './StatusBadge';
+import { cn } from '@/lib/utils';
 
-interface Listing {
-  id: string; slug: string; title: string; price: number;
-  state: string; lga: string; size: number; sizeUnit: string;
-  documentType: string; status: string; images: string[];
+interface ListingCardProps {
+  listing: Listing;
 }
 
-export default function ListingCard({ listing }: { listing: Listing }) {
-  const { isFavorite, toggle } = useFavorites();
+export function ListingCard({ listing }: ListingCardProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(listing.id);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(listing.id);
+  };
 
   return (
-    <motion.div whileHover={{ y: -4 }} className="bg-surface rounded-xl overflow-hidden shadow-sm border border-border">
-      <Link href={`/listings/${listing.slug}`}>
-        <div className="relative h-48 w-full">
-          <Image src={listing.images[0] || '/placeholder.jpg'} alt={listing.title} fill className="object-cover" loading="lazy" />
-          <div className="absolute top-2 left-2"><StatusBadge status={listing.status} /></div>
-        </div>
-      </Link>
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <Link href={`/listings/${listing.slug}`}>
-            <h3 className="font-semibold text-textPrimary line-clamp-1 hover:text-primary">{listing.title}</h3>
-          </Link>
-          <button onClick={() => toggle(listing.id)} className="text-textSecondary hover:text-red-500 transition-colors">
-            <Heart size={18} fill={isFavorite(listing.id) ? 'currentColor' : 'none'} className={isFavorite(listing.id) ? 'text-red-500' : ''} />
+    <Link href={`/listings/${listing.slug}`}>
+      <Card className="group overflow-hidden transition-all hover:shadow-lg">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <Image
+            src={listing.images[0] || '/placeholder.jpg'}
+            alt={listing.title}
+            fill
+            className="object-cover transition-transform group-hover:scale-105"
+          />
+          <div className="absolute top-3 left-3 z-10">
+            <StatusBadge status={listing.status} />
+          </div>
+          <button
+            onClick={handleFavoriteClick}
+            className="absolute top-3 right-3 z-10 rounded-full bg-white/90 p-2 transition-colors hover:bg-white"
+          >
+            <Heart
+              className={cn(
+                'h-5 w-5',
+                favorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
+              )}
+            />
           </button>
         </div>
-        <p className="text-primary font-bold text-lg mt-1">{formatPrice(listing.price)}</p>
-        <div className="flex items-center gap-1 text-textSecondary text-sm mt-1">
-          <MapPin size={14} /><span>{listing.lga}, {listing.state}</span>
-        </div>
-        <div className="flex gap-2 mt-2 text-xs text-textSecondary">
-          <span>{listing.size} {listing.sizeUnit}</span>
-          <span>•</span>
-          <span>{listing.documentType.replace(/_/g, ' ')}</span>
-        </div>
-      </div>
-    </motion.div>
+        
+        <CardContent className="p-4">
+          <div className="mb-2 flex items-start justify-between">
+            <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary">
+              {listing.title}
+            </h3>
+          </div>
+          
+          <p className="mb-3 text-2xl font-bold text-primary">
+            {formatPrice(listing.price)}
+          </p>
+          
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              <span className="truncate">{listing.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Maximize className="h-4 w-4" />
+              <span>
+                {listing.size} {listing.sizeUnit}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="border-t p-4">
+          <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+            <span>{listing.landType}</span>
+            <span>{listing.views} views</span>
+          </div>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }
