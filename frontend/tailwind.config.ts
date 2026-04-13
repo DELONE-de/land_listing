@@ -1,29 +1,23 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./features/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
   theme: {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // ── Design system ──────────────────────────────
         primary: {
           DEFAULT: "#166534",
           foreground: "#ffffff",
@@ -41,54 +35,78 @@ const config = {
         secondary: {
           DEFAULT: "#1e40af",
           foreground: "#ffffff",
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
           600: "#2563eb",
           700: "#1e40af",
           800: "#1e3a8a",
-          900: "#1e293b",
         },
         accent: {
           DEFAULT: "#ca8a04",
           foreground: "#ffffff",
           50: "#fefce8",
-          100: "#fef9c3",
-          200: "#fef08a",
-          300: "#fde047",
           400: "#facc15",
           500: "#eab308",
           600: "#ca8a04",
           700: "#a16207",
           800: "#854d0e",
-          900: "#713f12",
         },
+        background: "#f8fafc",
+        surface: "#ffffff",
+        border: "#e2e8f0",
+        "text-primary": "#0f172a",
+        "text-secondary": "#475569",
+
+        // ── shadcn CSS-var colours (fallbacks) ─────────
+        input: "hsl(var(--input, 214 32% 91%))",
+        ring: "hsl(var(--ring, 142 76% 36%))",
+        foreground: "hsl(var(--foreground, 222 47% 11%))",
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "#b91c1c",
+          foreground: "#ffffff",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "#f1f5f9",
+          foreground: "#475569",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "#ffffff",
+          foreground: "#0f172a",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#ffffff",
+          foreground: "#0f172a",
         },
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+
+      fontFamily: {
+        display: ["var(--font-display)", "Georgia", "serif"],
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
       },
+
+      borderRadius: {
+        lg: "0.75rem",
+        md: "0.5rem",
+        sm: "0.375rem",
+      },
+
+      boxShadow: {
+        card: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
+        "card-hover": "0 4px 6px rgba(0,0,0,0.07), 0 10px 32px rgba(0,0,0,0.08)",
+        modal: "0 20px 60px rgba(0,0,0,0.18)",
+      },
+
       keyframes: {
+        fadeUp: {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-400px 0" },
+          "100%": { backgroundPosition: "400px 0" },
+        },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -98,13 +116,17 @@ const config = {
           to: { height: "0" },
         },
       },
+
       animation: {
+        "fade-up": "fadeUp 0.5s ease forwards",
+        "fade-in": "fadeIn 0.4s ease forwards",
+        shimmer: "shimmer 1.8s infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config
+  plugins: [],
+} satisfies Config;
 
-export default config
+export default config;

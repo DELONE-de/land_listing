@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
 
 interface WhatsAppButtonProps {
-  listingId: string;
-  phoneNumber: string;
+  listingId?: string;
+  phoneNumber?: string;
   message?: string;
+  variant?: string;
+  label?: string;
 }
 
-export function WhatsAppButton({ listingId, phoneNumber, message }: WhatsAppButtonProps) {
+export function WhatsAppButton({ listingId, phoneNumber, message, label }: WhatsAppButtonProps) {
   const [isTracking, setIsTracking] = useState(false);
 
   const handleClick = async () => {
@@ -19,7 +21,7 @@ export function WhatsAppButton({ listingId, phoneNumber, message }: WhatsAppButt
 
     setIsTracking(true);
     try {
-      await apiClient.trackClick(listingId, 'whatsapp');
+      if (listingId) await apiClient.trackClick(listingId, 'whatsapp');
     } catch (error) {
       console.error('Failed to track WhatsApp click:', error);
     } finally {
@@ -27,7 +29,9 @@ export function WhatsAppButton({ listingId, phoneNumber, message }: WhatsAppButt
     }
 
     const defaultMessage = message || 'Hi, I am interested in this property listing.';
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
+    const url = phoneNumber
+      ? `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`
+      : `https://wa.me/?text=${encodeURIComponent(defaultMessage)}`;
     window.open(url, '_blank');
   };
 
@@ -38,7 +42,7 @@ export function WhatsAppButton({ listingId, phoneNumber, message }: WhatsAppButt
       size="lg"
     >
       <MessageCircle className="h-5 w-5" />
-      Contact via WhatsApp
+      {label || 'Contact via WhatsApp'}
     </Button>
   );
 }

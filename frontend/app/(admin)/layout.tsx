@@ -12,7 +12,8 @@ import {
   BarChart3, 
   LogOut,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -28,7 +29,10 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && pathname !== '/admin/login') {
+    if (loading) return;
+    if (isAuthenticated && pathname === '/admin/login') {
+      router.push('/dashboard');
+    } else if (!isAuthenticated && pathname !== '/admin/login') {
       router.push('/admin/login');
     }
   }, [loading, isAuthenticated, pathname, router]);
@@ -50,10 +54,11 @@ export default function AdminLayout({
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Listings', href: '/dashboard/listings', icon: List },
-    { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    { name: 'Dashboard',  href: '/dashboard',            icon: LayoutDashboard },
+    { name: 'Listings',   href: '/dashboard/listings',   icon: List },
+    { name: 'Inquiries',  href: '/dashboard/inquiries',  icon: MessageSquare },
+    { name: 'Analytics',  href: '/dashboard/analytics',  icon: BarChart3 },
+    { name: 'Settings',   href: '/dashboard/settings',   icon: Settings },
   ];
 
   return (

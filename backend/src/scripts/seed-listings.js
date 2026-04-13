@@ -1,7 +1,12 @@
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
+const slugify = require('slugify');
 
 const prisma = new PrismaClient();
+
+function generateSlug(title) {
+  return slugify(title, { lower: true, strict: true });
+}
 
 const sampleListings = [
   {
@@ -101,7 +106,7 @@ async function seedListings() {
   console.log('🌱 Seeding sample listings...');
   
   for (const listing of sampleListings) {
-    const created = await prisma.listing.create({ data: listing });
+    const created = await prisma.listing.create({ data: { ...listing, slug: generateSlug(listing.title) } });
     console.log(`✓ Created: ${created.title} (${created.slug})`);
   }
   

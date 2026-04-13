@@ -4,23 +4,23 @@ export interface Listing {
   slug: string;
   description: string;
   price: number;
-  location: string;
   state: string;
-  lga?: string;
+  city: string;
+  address: string;
   landType: string;
   size: number;
-  sizeUnit: string;
-  status: 'available' | 'sold' | 'under_offer';
-  images: string[];
+  sizeUnit?: string;
+  status: string;
+  photos: { url: string; publicId: string; order: number }[];
   amenities: string[];
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
+  titleDocuments: string[];
+  lat?: number;
+  lng?: number;
   views: number;
   whatsappClicks: number;
   shareClicks: number;
-  featured: boolean;
+  sellerName?: string;
+  sellerPhone?: string;
   createdAt: string;
   updatedAt: string;
 }

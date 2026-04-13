@@ -1,5 +1,5 @@
 const adminService = require('../services/admin.service');
-const analyticsModule = require('../modules/analytics');
+const analyticsModule = require('../services/analytics');
 
 exports.login = async (req, res, next) => {
   try {
@@ -15,6 +15,37 @@ exports.getMe = async (req, res, next) => {
   try {
     const admin = await adminService.getProfile(req.admin.id);
     res.json({ success: true, data: admin, message: '' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createSubAdmin = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email and password are required' });
+    }
+    const admin = await adminService.createSubAdmin(name, email, password);
+    res.status(201).json({ success: true, data: admin, message: 'Sub-admin created successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.listSubAdmins = async (req, res, next) => {
+  try {
+    const admins = await adminService.listSubAdmins();
+    res.json({ success: true, data: admins, message: '' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteSubAdmin = async (req, res, next) => {
+  try {
+    await adminService.deleteSubAdmin(req.params.id, req.admin.id);
+    res.json({ success: true, message: 'Sub-admin deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -100,6 +131,12 @@ const getAnalyticsSummary = async (req, res) => {
 };
 
 module.exports = {
+  login: exports.login,
+  getMe: exports.getMe,
+  changePassword: exports.changePassword,
+  createSubAdmin: exports.createSubAdmin,
+  listSubAdmins: exports.listSubAdmins,
+  deleteSubAdmin: exports.deleteSubAdmin,
   getDashboard,
   getPopularAnalytics,
   getConversionAnalytics,

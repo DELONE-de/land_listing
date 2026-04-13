@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const c = require('../controllers/listing.controller');
 const { viewRateLimiter, clickRateLimiter } = require('../middleware/analytics.middleware');
-const { generateListingPDFController } = require('../controllers/listingController');
+const { generateListingPDFController } = require('../controllers/listing.controller');
 
 
 // Utility routes

@@ -4,18 +4,17 @@ const adminController = require('../controllers/admin.controller');
 const listingController = require('../controllers/listing.controller');
 const uploadController = require('../controllers/upload.controller');
 const inquiryController = require('../controllers/inquiry.controller');
-const {
-  getDashboard,
-  getPopularAnalytics,
-  getConversionAnalytics,
-  getAnalyticsSummary
-} = require('../controllers/adminController');
-
 const prisma = require('../lib/prisma');
 
 // Auth routes
 router.post('/auth/login', adminController.login);
 router.get('/auth/me', authenticateAdmin, adminController.getMe);
+router.post('/auth/change-password', authenticateAdmin, adminController.changePassword);
+
+// Sub-admin management
+router.get('/sub-admins', authenticateAdmin, adminController.listSubAdmins);
+router.post('/sub-admins', authenticateAdmin, adminController.createSubAdmin);
+router.delete('/sub-admins/:id', authenticateAdmin, adminController.deleteSubAdmin);
 
 // Upload routes
 router.get('/upload-signature', authenticateAdmin, uploadController.getUploadSignature);
@@ -32,12 +31,12 @@ router.get('/inquiries/:id', authenticateAdmin, inquiryController.show);
 router.patch('/inquiries/:id', authenticateAdmin, inquiryController.update);
 
 // Dashboard endpoint
-router.get('/dashboard', getDashboard);
+router.get('/dashboard', adminController.getDashboard);
 
 // Analytics endpoints
-router.get('/analytics/popular', getPopularAnalytics);
-router.get('/analytics/conversion', getConversionAnalytics);
-router.get('/analytics/summary', getAnalyticsSummary);
+router.get('/analytics/popular', adminController.getPopularAnalytics);
+router.get('/analytics/conversion', adminController.getConversionAnalytics);
+router.get('/analytics/summary', adminController.getAnalyticsSummary);
 
 // Protected admin routes
 router.get('/stats', authenticateAdmin, async (req, res, next) => {

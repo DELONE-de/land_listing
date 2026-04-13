@@ -18,9 +18,9 @@ class AnalyticsModule {
       
       // Get listings by status
       const [available, sold, underOffer] = await Promise.all([
-        prisma.listing.count({ where: { status: 'available' } }),
-        prisma.listing.count({ where: { status: 'sold' } }),
-        prisma.listing.count({ where: { status: 'under_offer' } })
+        prisma.listing.count({ where: { status: 'AVAILABLE' } }),
+        prisma.listing.count({ where: { status: 'SOLD' } }),
+        prisma.listing.count({ where: { status: 'UNDER_OFFER' } })
       ]);
       
       const statusCounts = {
@@ -44,7 +44,8 @@ class AnalyticsModule {
               id: true,
               title: true,
               price: true,
-              location: true
+              state: true,
+              city: true
             }
           }
         }
@@ -61,7 +62,7 @@ class AnalyticsModule {
           id: inquiry.listing.id,
           title: inquiry.listing.title,
           price: inquiry.listing.price,
-          location: inquiry.listing.location
+          location: inquiry.listing ? `${inquiry.listing.city}, ${inquiry.listing.state}` : null
         } : null,
         createdAt: inquiry.createdAt
       }));
@@ -97,8 +98,9 @@ class AnalyticsModule {
           id: true,
           title: true,
           price: true,
-          location: true,
-          images: true,
+          state: true,
+          city: true,
+          photos: true,
           views: true,
           whatsappClicks: true,
           createdAt: true
@@ -115,8 +117,9 @@ class AnalyticsModule {
           id: true,
           title: true,
           price: true,
-          location: true,
-          images: true,
+          state: true,
+          city: true,
+          photos: true,
           views: true,
           whatsappClicks: true,
           createdAt: true
@@ -128,8 +131,8 @@ class AnalyticsModule {
         id: listing.id,
         title: listing.title,
         price: listing.price,
-        location: listing.location,
-        image: listing.images?.[0] || null,
+        location: `${listing.city}, ${listing.state}`,
+        image: listing.photos?.[0] || null,
         views: listing.views || 0,
         whatsappClicks: listing.whatsappClicks || 0,
         clickRate: listing.views > 0 

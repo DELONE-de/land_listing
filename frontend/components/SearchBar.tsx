@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSearch?: (query: string) => void;
   placeholder?: string;
 }
 
@@ -15,7 +15,7 @@ export function SearchBar({ onSearch, placeholder = 'Search listings...' }: Sear
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query);
+    if (onSearch) onSearch(query);
   };
 
   return (
@@ -34,4 +34,4 @@ export function SearchBar({ onSearch, placeholder = 'Search listings...' }: Sear
     </form>
   );
 }
-}
+

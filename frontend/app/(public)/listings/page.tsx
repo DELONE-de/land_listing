@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchBar } from '@/components/SearchBar';
@@ -13,6 +13,14 @@ import { useListings } from '@/hooks/useListings';
 import { FilterParams } from '@/lib/types';
 
 export default function ListingsPage() {
+  return (
+    <Suspense>
+      <ListingsContent />
+    </Suspense>
+  );
+}
+
+function ListingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
@@ -104,18 +112,18 @@ export default function ListingsPage() {
             <div>
               <Label>Land Type</Label>
               <Select
-                value={filters.landType || ''}
-                onValueChange={(value) => handleFilterChange('landType', value)}
+                value={filters.landType || 'all'}
+                onValueChange={(value) => handleFilterChange('landType', value === 'all' ? '' : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
-                  <SelectItem value="residential">Residential</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                  <SelectItem value="agricultural">Agricultural</SelectItem>
-                  <SelectItem value="industrial">Industrial</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="RESIDENTIAL">Residential</SelectItem>
+                  <SelectItem value="COMMERCIAL">Commercial</SelectItem>
+                  <SelectItem value="AGRICULTURAL">Agricultural</SelectItem>
+                  <SelectItem value="INDUSTRIAL">Industrial</SelectItem>
                 </SelectContent>
               </Select>
             </div>

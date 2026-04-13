@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 
 interface User {
@@ -13,13 +12,17 @@ interface User {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const response = await apiClient.getMe();
       if (response.success) {
@@ -36,8 +39,7 @@ export function useAuth() {
     try {
       const response = await apiClient.login({ email, password });
       if (response.success) {
-        setUser(response.data.user);
-        router.push('/dashboard');
+        setUser(response.data.admin || response.data.user);
         return { success: true };
       }
       return { success: false, error: response.message };
@@ -49,7 +51,6 @@ export function useAuth() {
   const logout = () => {
     localStorage.removeItem('admin_token');
     setUser(null);
-    router.push('/admin/login');
   };
 
   return {

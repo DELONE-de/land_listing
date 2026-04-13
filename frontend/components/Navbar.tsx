@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X, Heart, User } from 'lucide-react';
+import { Menu, X, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
@@ -54,12 +54,6 @@ export function Navbar() {
               </Button>
             </Link>
 
-            <Link href="/dashboard" className="hidden md:block">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-
             {/* Mobile menu button */}
             <Button
               variant="ghost"
@@ -94,13 +88,6 @@ export function Navbar() {
                 {item.name}
               </Link>
             ))}
-            <Link
-              href="/dashboard"
-              className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Admin Dashboard
-            </Link>
           </div>
         </div>
       </div>

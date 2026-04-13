@@ -29,7 +29,7 @@ export function ListingCard({ listing }: ListingCardProps) {
       <Card className="group overflow-hidden transition-all hover:shadow-lg">
         <div className="relative aspect-[4/3] overflow-hidden">
           <Image
-            src={listing.images[0] || '/placeholder.jpg'}
+            src={(listing.photos?.[0]?.url) || '/placeholder.jpg'}
             alt={listing.title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
@@ -64,7 +64,7 @@ export function ListingCard({ listing }: ListingCardProps) {
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              <span className="truncate">{listing.location}</span>
+              <span className="truncate">{listing.city}, {listing.state}</span>
             </div>
             <div className="flex items-center gap-2">
               <Maximize className="h-4 w-4" />

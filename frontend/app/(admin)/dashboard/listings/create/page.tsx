@@ -20,12 +20,12 @@ const listingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
   price: z.number().min(0, 'Price must be positive'),
-  location: z.string().min(2, 'Location is required'),
+  address: z.string().min(5, 'Address is required'),
+  city: z.string().min(2, 'City is required'),
   state: z.string().min(2, 'State is required'),
-  landType: z.string().min(2, 'Land type is required'),
+  landType: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'AGRICULTURAL', 'INDUSTRIAL', 'MIXED_USE']),
   size: z.number().min(0, 'Size must be positive'),
-  sizeUnit: z.string().min(1, 'Size unit is required'),
-  status: z.enum(['available', 'sold', 'under_offer']),
+  status: z.enum(['AVAILABLE', 'SOLD', 'UNDER_OFFER']),
 });
 
 type ListingFormData = z.infer<typeof listingSchema>;
@@ -46,8 +46,7 @@ export default function CreateListingPage() {
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
-      status: 'available',
-      sizeUnit: 'sqm',
+      status: 'AVAILABLE',
     },
   });
 
@@ -59,7 +58,7 @@ export default function CreateListingPage() {
     try {
       // Get upload signature
       const signatureResponse = await apiClient.getUploadSignature();
-      const { signature, timestamp, cloudName, apiKey, folder } = signatureResponse.data;
+      const { signature, timestamp, cloud_name: cloudName, api_key: apiKey, folder } = signatureResponse.data;
 
       // Upload each file to Cloudinary
       const uploadPromises = Array.from(files).map(async (file) => {
@@ -82,7 +81,8 @@ export default function CreateListingPage() {
         return data.secure_url;
       });
 
-      const urls = await Promise.all(uploadPromises);
+      const urls = (await Promise.all(uploadPromises)).filter(Boolean);
+      if (urls.length === 0) throw new Error('Upload failed: no images returned from Cloudinary');
       setImages([...images, ...urls]);
 
       toast({
@@ -117,11 +117,12 @@ export default function CreateListingPage() {
     setIsSubmitting(true);
     try {
       const slug = generateSlug(data.title);
+      const photos = images.map((url, order) => ({ url, publicId: url?.split('/').pop() ?? url, order }));
       
       const response = await apiClient.createListing({
         ...data,
         slug,
-        images,
+        photos,
       });
 
       if (response.success) {
@@ -132,9 +133,13 @@ export default function CreateListingPage() {
         router.push('/dashboard/listings');
       }
     } catch (error: any) {
+      const errors = error.response?.data?.errors;
+      const message = errors
+        ? errors.map((e: any) => `${e.field}: ${e.message}`).join(', ')
+        : error.response?.data?.message || error.message || 'Failed to create listing';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create listing',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -207,15 +212,15 @@ export default function CreateListingPage() {
                 <Label htmlFor="status">Status *</Label>
                 <Select
                   onValueChange={(value) => setValue('status', value as any)}
-                  defaultValue="available"
+                  defaultValue="AVAILABLE"
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="available">Available</SelectItem>
-                    <SelectItem value="sold">Sold</SelectItem>
-                    <SelectItem value="under_offer">Under Offer</SelectItem>
+                    <SelectItem value="AVAILABLE">Available</SelectItem>
+                    <SelectItem value="SOLD">Sold</SelectItem>
+                    <SelectItem value="UNDER_OFFER">Under Offer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -223,7 +228,7 @@ export default function CreateListingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="size">Size *</Label>
+                <Label htmlFor="size">Size (sqm) *</Label>
                 <Input
                   id="size"
                   type="number"
@@ -234,38 +239,20 @@ export default function CreateListingPage() {
                   <p className="mt-1 text-sm text-destructive">{errors.size.message}</p>
                 )}
               </div>
-
-              <div>
-                <Label htmlFor="sizeUnit">Size Unit *</Label>
-                <Select
-                  onValueChange={(value) => setValue('sizeUnit', value)}
-                  defaultValue="sqm"
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sqm">Square Meters</SelectItem>
-                    <SelectItem value="acres">Acres</SelectItem>
-                    <SelectItem value="hectares">Hectares</SelectItem>
-                    <SelectItem value="plots">Plots</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <div>
               <Label htmlFor="landType">Land Type *</Label>
-              <Select onValueChange={(value) => setValue('landType', value)}>
+              <Select onValueChange={(value) => setValue('landType', value as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select land type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="residential">Residential</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                  <SelectItem value="agricultural">Agricultural</SelectItem>
-                  <SelectItem value="industrial">Industrial</SelectItem>
-                  <SelectItem value="mixed">Mixed Use</SelectItem>
+                  <SelectItem value="RESIDENTIAL">Residential</SelectItem>
+                  <SelectItem value="COMMERCIAL">Commercial</SelectItem>
+                  <SelectItem value="AGRICULTURAL">Agricultural</SelectItem>
+                  <SelectItem value="INDUSTRIAL">Industrial</SelectItem>
+                  <SelectItem value="MIXED_USE">Mixed Use</SelectItem>
                 </SelectContent>
               </Select>
               {errors.landType && (
@@ -295,16 +282,28 @@ export default function CreateListingPage() {
               </div>
 
               <div>
-                <Label htmlFor="location">Location *</Label>
+                <Label htmlFor="city">City *</Label>
                 <Input
-                  id="location"
-                  {...register('location')}
-                  placeholder="Lekki Phase 1"
+                  id="city"
+                  {...register('city')}
+                  placeholder="Lekki"
                 />
-                {errors.location && (
-                  <p className="mt-1 text-sm text-destructive">{errors.location.message}</p>
+                {errors.city && (
+                  <p className="mt-1 text-sm text-destructive">{errors.city.message}</p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="address">Address *</Label>
+              <Input
+                id="address"
+                {...register('address')}
+                placeholder="12 Admiralty Way, Lekki Phase 1"
+              />
+              {errors.address && (
+                <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>
+              )}
             </div>
           </CardContent>
         </Card>

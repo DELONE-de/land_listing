@@ -8,14 +8,12 @@ export function Footer() {
     company: [
       { name: 'About Us', href: '/about' },
       { name: 'Contact', href: '/contact' },
-      { name: 'Careers', href: '/careers' },
       { name: 'Blog', href: '/blog' },
     ],
     resources: [
       { name: 'Listings', href: '/listings' },
       { name: 'Favorites', href: '/favorites' },
       { name: 'FAQs', href: '/faq' },
-      { name: 'Help Center', href: '/help' },
     ],
     legal: [
       { name: 'Privacy Policy', href: '/privacy' },

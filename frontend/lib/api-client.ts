@@ -57,14 +57,20 @@ class ApiClient {
   // Auth methods
   async login(credentials: { email: string; password: string }) {
     const response = await this.client.post('/admin/auth/login', credentials);
-    if (response.data.token) {
-      localStorage.setItem('admin_token', response.data.token);
+    const token = response.data?.data?.token;
+    if (token) {
+      localStorage.setItem('admin_token', token);
     }
     return response.data;
   }
 
   async getMe() {
     const response = await this.client.get('/admin/auth/me');
+    return response.data;
+  }
+
+  async changePassword(data: { currentPassword: string; newPassword: string }) {
+    const response = await this.client.post('/admin/auth/change-password', data);
     return response.data;
   }
 
@@ -186,6 +192,22 @@ class ApiClient {
   // Upload methods
   async getUploadSignature() {
     const response = await this.client.get('/admin/upload-signature');
+    return response.data;
+  }
+
+  // Sub-admin methods
+  async listSubAdmins() {
+    const response = await this.client.get('/admin/sub-admins');
+    return response.data;
+  }
+
+  async createSubAdmin(data: { name: string; email: string; password: string }) {
+    const response = await this.client.post('/admin/sub-admins', data);
+    return response.data;
+  }
+
+  async deleteSubAdmin(id: string) {
+    const response = await this.client.delete(`/admin/sub-admins/${id}`);
     return response.data;
   }
 }

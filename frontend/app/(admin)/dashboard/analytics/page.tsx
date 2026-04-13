@@ -142,9 +142,9 @@ export default function AnalyticsPage() {
                         {index + 1}
                       </div>
                       <div className="relative h-12 w-12 overflow-hidden rounded">
-                        {listing.image ? (
+                        {listing.images?.[0] ? (
                           <Image
-                            src={listing.image}
+                            src={listing.images![0]}
                             alt={listing.title}
                             fill
                             className="object-cover"
@@ -183,9 +183,9 @@ export default function AnalyticsPage() {
                         {index + 1}
                       </div>
                       <div className="relative h-12 w-12 overflow-hidden rounded">
-                        {listing.image ? (
+                        {listing.images?.[0] ? (
                           <Image
-                            src={listing.image}
+                            src={listing.images![0]}
                             alt={listing.title}
                             fill
                             className="object-cover"

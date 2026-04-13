@@ -121,7 +121,9 @@ model Favorite {
 
 model Admin {
   id        String   @id @default(cuid())
+  name      String   @default("")
   email     String   @unique
   password  String
+  role      String   @default("sub_admin")
   createdAt DateTime @default(now())
 }

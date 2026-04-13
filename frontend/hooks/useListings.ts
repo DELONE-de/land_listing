@@ -19,7 +19,11 @@ export function useListings(initialParams?: FilterParams) {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getListings(params);
+      const response = await apiClient.getListings({
+        ...params,
+        landType: params.landType ? params.landType.toUpperCase() : undefined,
+        status: params.status ? params.status.toUpperCase() : undefined,
+      });
       
       if (response.success) {
         setListings(response.data.listings || response.data);

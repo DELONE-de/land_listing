@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
     openGraph: {
       title: listing.title,
       description: listing.description?.substring(0, 160),
-      images: listing.images?.[0] ? [listing.images[0]] : [],
+      images: listing.photos?.[0]?.url ? [listing.photos[0].url] : [],
     },
   };
 }
@@ -80,7 +80,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
-            <ImageGallery images={listing.images} title={listing.title} />
+            <ImageGallery images={(listing.photos || []).map((p: any) => p.url)} title={listing.title} />
 
             {/* Title and Price */}
             <div>
@@ -89,7 +89,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   <h1 className="text-3xl font-bold mb-2">{listing.title}</h1>
                   <div className="flex items-center gap-2 text-gray-600">
                     <MapPin className="h-4 w-4" />
-                    <span>{listing.location}, {listing.state}</span>
+                    <span>{listing.city}, {listing.state}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -159,10 +159,10 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             )}
 
             {/* Location Map */}
-            {listing.coordinates && (
+            {listing.lat && listing.lng && (
               <div>
                 <h2 className="text-2xl font-bold mb-4">Location</h2>
-                <ListingMap coordinates={listing.coordinates} title={listing.title} />
+                <ListingMap coordinates={{ lat: listing.lat, lng: listing.lng }} title={listing.title} />
               </div>
             )}
           </div>
